@@ -11,6 +11,6 @@
     priv: 'tech_test.*:ALL,GRANT' 
     state: present
   with_items:
-    - { host: '10.100.0.1'}
+    - { host: '10.100.0.100'}
     - { host: '10.100.0.102'}
     - { host: '10.100.0.103'}
