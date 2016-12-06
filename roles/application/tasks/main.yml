@@ -27,7 +27,7 @@
     dest: "{{ item.target }}" 
     mode: "{{ item.permission }}"
   with_items:
-    - { source: "files/requirements.txt", target: "/tmp/requirements.txt", permission: "0644"}
+    - { source: "templates/requirements.txt", target: "/tmp/requirements.txt", permission: "0644"}
     - { source: "templates/applicationd.j2", target: "/etc/init.d/applicationd", permission: "0755"}
 - stat:
     path: /opt/application
