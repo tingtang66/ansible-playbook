@@ -1,0 +1,45 @@
+---
+- name: Install software properties common
+  apt:
+    name: software-properties-common
+    state: present
+- name: Add MariaDB repo
+  copy:
+    src: files/mariadb.list
+    dest: /etc/apt/sources.list.d/
+    owner: root
+    mode: 0644
+  register: repo
+- name: Add trust key
+  apt_key:
+    keyserver: "hkp://keyserver.ubuntu.com:80"
+    id: "0xcbcb082a1bb943db"
+  run_once: true 
+- name: Update apt cache
+  apt:
+    update_cache: yes 
+  when: repo.changed
+- name: Install MariaDB and requirements
+  apt:
+    name: "{{ item.name }}" 
+    state: present
+  with_items:
+    - { name: 'mariadb-server'}
+    - { name: 'python-mysqldb'}
+- stat:
+    path: /etc/mysql/my.cnf
+    get_md5: yes
+  register: before
+- name: Update MariaDB configuration
+  lineinfile:
+    dest: /etc/mysql/my.cnf
+    state: absent
+    regexp: '^bind-address'
+- stat: 
+    path: /etc/mysql/my.cnf
+    get_md5: yes
+  register: after
+- name: Restart MariaDB service
+  command: /etc/init.d/mysql restart
+  when: before.stat.md5 != after.stat.md5
+- include: database.yml

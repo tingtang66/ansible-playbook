@@ -1,0 +1,57 @@
+---
+- name: Download PIP 
+  get_url:
+    url: https://bootstrap.pypa.io/get-pip.py
+    dest: /tmp
+    mode: 0755
+  register: pip
+- name: Apt update cache
+  apt:
+    update_cache: yes
+  when: pip.changed
+- name: Add name resovle
+  lineinfile:
+    dest: /etc/hosts
+    state: present
+    line: "10.100.0.104 node04"
+- name: Install Git & Python-MySQLdb
+  apt:
+    name: "{{ item.name }}"
+    state: present
+  with_items:
+    - { name: git }
+    - { name: python-mysqldb }
+- name: Copy application and requirments to remote
+  copy:
+    src: "{{ item.source }}"
+    dest: "{{ item.target }}" 
+    mode: "{{ item.permission }}"
+  with_items:
+    - { source: "files/requirements.txt", target: "/tmp", permission: "0644"}
+    - { source: "files/applicationd", target: "/etc/init.d/", permission: "0755"}
+- stat:
+    path: /opt/application
+  register: deployment
+- name: Clone/Update application 
+  git:
+    repo: 'https://github.com/tingtang66/tech_test.git'
+    dest: '/opt/application'
+    clone: yes
+    update: yes
+  register: repo
+- name: Install requirements
+  command: "{{ item.command }}"
+  with_items:
+    - { command: "python /tmp/get-pip.py"}
+    - { command: "pip install -r /tmp/requirements.txt"}
+    - { command: "/etc/init.d/applicationd start"}
+    - { command: "update-rc.d applicationd defaults"}
+  when: deployment.stat.exists == False
+- name: Restart application
+  command: "{{ item.command}}"
+  with_items:
+    - { command: "/etc/init.d/applicationd stop"}
+    - { command: "/etc/init.d/applicationd start"}
+  environment:
+    HOST_IP: "{{ ansible_eth1.ipv4.address }}"
+  when: repo.changed

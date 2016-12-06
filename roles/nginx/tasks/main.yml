@@ -1,0 +1,44 @@
+---
+- name: Add Trust key
+  apt_key:
+    keyserver: "keyserver.ubuntu.com"
+    id: "ABF5BD827BD9BF62"
+  run_once: true
+- name: Add Nginx repo
+  copy:
+    src: files/nginx.list   
+    dest: /etc/apt/sources.list.d/
+    owner: root
+    group: root
+    mode: 0644
+  register: repo
+- name: Update Ubuntu
+  apt:
+    update_cache: yes
+  when: repo.changed 
+- name: Nginx Installation
+  apt:
+    name: nginx
+    state: present
+- name: Remove default Nginx configuration
+  file:
+    path: /etc/nginx/conf.d/default.conf
+    state: absent
+- name: Copy Nginx to remote
+  copy: 
+    src: files/lb-nginx.conf
+    dest: /etc/nginx/conf.d/lb-nginx.conf
+  register: conf
+#Any LB configuration should be placed between before and after
+- stat:
+    path: /etc/nginx/conf.d/lb-nginx.conf
+    get_md5: yes
+  register: before 
+
+- stat:
+    path: /etc/nginx/conf.d/lb-nginx.conf
+    get_md5: yes
+  register: after
+- name: Restart Nginx 
+  command: /etc/init.d/nginx restart
+  when: before.stat.md5 != after.stat.md5 or conf.changed
