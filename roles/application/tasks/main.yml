@@ -39,6 +39,9 @@
     clone: yes
     update: yes
   register: repo
+- name: Create DB tables
+  command: python /opt/application/install_db.py
+  when: inventory_host is 10.100.0.102
 - name: Install requirements
   command: "{{ item.command }}"
   with_items:
