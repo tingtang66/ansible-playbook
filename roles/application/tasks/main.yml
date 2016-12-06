@@ -22,13 +22,13 @@
     - { name: git }
     - { name: python-mysqldb }
 - name: Copy application and requirments to remote
-  copy:
+  template:
     src: "{{ item.source }}"
     dest: "{{ item.target }}" 
     mode: "{{ item.permission }}"
   with_items:
     - { source: "files/requirements.txt", target: "/tmp", permission: "0644"}
-    - { source: "files/applicationd", target: "/etc/init.d/", permission: "0755"}
+    - { source: "templates/applicationd", target: "/etc/init.d/", permission: "755"}
 - stat:
     path: /opt/application
   register: deployment
