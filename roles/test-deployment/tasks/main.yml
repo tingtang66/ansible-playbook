@@ -1,11 +1,25 @@
 ---
-- name: Check Load balancing server status
-  action:
-    uri:
-      url: http://10.100.0.101
-      return_content: yes
-  when: inventory_hostname in lb-layer
+- action: uri url=http://10.100.0.101 return_content=yes
+  when: inventory_hostname in groups['lb-layer']
   register: page
 
-- fail: msg='Service is not started'
-  when: "'NASA' not in page.content" and inventory_hostname in lb-layer
+- fail: msg="{{ page.content }}"
+  when: "inventory_hostname in groups['lb-layer'] and 'NASA' not in page.content"
+
+- shell: ps -ef | grep applicationd
+  when: inventory_hostname in groups['app-layer']
+  register: app_result
+
+- assert:
+    that:
+      - 'applicationd' in app_result.stdout
+  when: inventory_hostname in groups['app-layer']
+
+- shell: /etc/init.d/mysql status | grep 'mysqld.sock'
+  when: inventory_hostname in groups['db-layer']
+  register: db_result
+
+- assert:
+    that:
+      - "'/var/run/mysqld/mysqld.sock' in db_result.stdout"
+  when: inventory_hostname in groups['db-layer']
