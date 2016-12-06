@@ -1,0 +1,11 @@
+---
+- name: Check Load balancing server status
+  action:
+    uri:
+      url: http://10.100.0.101
+      return_content: yes
+  when: inventory_hostname in lb-layer
+  register: page
+
+- fail: msg='Service is not started'
+  when: "'NASA' not in page.content" and inventory_hostname in lb-layer
