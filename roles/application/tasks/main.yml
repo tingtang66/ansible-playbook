@@ -39,19 +39,18 @@
     clone: yes
     update: yes
   register: repo
-- name: Create DB tables
-  command: python /opt/application/install_db.py
-  when: inventory_hostname == '10.100.0.102' and pip.changed 
 - name: Install requirements
   command: "{{ item.command }}"
   with_items:
     - { command: "python /tmp/get-pip.py"}
     - { command: "pip install -r /tmp/requirements.txt"}
-    - { command: "/etc/init.d/applicationd start"}
     - { command: "update-rc.d applicationd defaults"}
   when: deployment.stat.exists == False
-- name: Restart application
-  command: "{{ item.command}}"
+- name: Create DB tables
+  command: python /opt/application/install_db.py
+  when: inventory_hostname == '10.100.0.102' and pip.changed 
+- name: Restart application when code updated 
+  command: "{{ item.command }}"
   with_items:
     - { command: "/etc/init.d/applicationd stop"}
     - { command: "/etc/init.d/applicationd start"}
