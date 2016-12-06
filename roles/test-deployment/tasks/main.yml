@@ -12,7 +12,7 @@
 
 - assert:
     that:
-      - 'applicationd' in app_result.stdout
+      - "'applicationd' in app_result.stdout"
   when: inventory_hostname in groups['app-layer']
 
 - shell: /etc/init.d/mysql status | grep 'mysqld.sock'
